@@ -1,5 +1,7 @@
 <script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/showdown@<version tag>/dist/showdown.min.js"></script>
+<script src="https://code.jquery.com/jquery-4.0.0.slim.min.js" integrity="sha256-8DGpv13HIm+5iDNWw1XqxgFB4mj+yOKFNb+tHBZOowc=" crossorigin="anonymous"></script>
+<div id="fulltext" style="display: none;">
 # सिद्धिविनायक पूजापद्धतिः
 
 ## द्विराचम्य​
@@ -45,3 +47,10 @@
   देवी बालार्क वर्णा भवतु सुखकरी प्राणशक्तिः परा नः 
 
   ॐ आं ह्रीं क्रौं यं रं लं वं शं षं सं हं  हंसस्सोहं । अस्यां मूर्तौ प्राणास्तिष्टंतु । अस्यां मूर्तौ जीव इह स्थितः । अस्यां मूर्तौ सर्वेंद्रियाणि । मनः श्रोत्र त्वक् चक्षुर् जिह्वा घ्राण वाक् पाणि पाद पायुपस्थाख्यानि इहैवागत्य सुखं चिरं तिष्टंतु स्वाहा 
+</div>
+<div id="showtext"></div>
+<src>
+ var converter = new showdown.Converter(),
+    text      = $("#fulltext").html(),
+    $("#showtext").html(converter.makeHtml(text));
+</src>
