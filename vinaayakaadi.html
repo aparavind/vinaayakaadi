@@ -26,57 +26,6 @@
 
     const contentEl = document.getElementById("content");
 
-    // Function to initialize Aksharamukha with retry logic
-    function initAksharamukha(retryCount = 0, maxRetries = 5) {
-      if (window.Aksharamukha) {
-        console.log('Aksharamukha loaded, initializing...');
-        return true;
-      } else {
-        if (retryCount < maxRetries) {
-          console.log(`Aksharamukha not available yet, retrying... (${retryCount + 1}/${maxRetries})`);
-          setTimeout(() => initAksharamukha(retryCount + 1, maxRetries), 500);
-          return false;
-        } else {
-          console.error('Failed to load Aksharamukha after multiple attempts');
-          return false;
-        }
-      }
-    }
-
-    // Alternative: Use a MutationObserver to detect when the script loads
-    function waitForAksharamukha() {
-      return new Promise((resolve) => {
-        if (window.Aksharamukha) {
-          resolve();
-          return;
-        }
-        
-        // Create a custom event to signal when Aksharamukha is ready
-        const observer = new MutationObserver(() => {
-          if (window.Aksharamukha) {
-            observer.disconnect();
-            resolve();
-          }
-        });
-        
-        observer.observe(window, {
-          attributes: true,
-          childList: false,
-          subtree: false
-        });
-        
-        // Fallback timeout
-        setTimeout(() => {
-          if (window.Aksharamukha) {
-            resolve();
-          } else {
-            console.warn('Aksharamukha not loaded after timeout');
-            resolve(); // Still resolve to continue
-          }
-        }, 3000);
-      });
-    }
-
     // Main loading logic
     fetch("vinaayakaadi.md")
       .then(r => {
@@ -94,16 +43,6 @@
         script.src = "https://cdn.jsdelivr.net/npm/aksharamukha@latest/dist/index.global.js";
         script.onload = () => {
           console.log('Aksharamukha script loaded');
-          // Wait for the library to be fully initialized
-          waitForAksharamukha().then(() => {
-            if (window.Aksharamukha && typeof window.Aksharamukha.init === 'function') {
-              console.log('Initializing Aksharamukha UI');
-            } else {
-              console.error('Aksharamukha.init is not a function or Aksharamukha not defined');
-              // Try the retry method as fallback
-              initAksharamukha();
-            }
-          });
         };
         script.onerror = (err) => {
           console.error('Failed to load Aksharamukha script:', err);
