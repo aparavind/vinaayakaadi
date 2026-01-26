@@ -6,6 +6,7 @@
 
   <!-- Markdown renderer -->
   <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
 
   <style>
     body {
@@ -21,29 +22,12 @@
   <!-- Markdown output -->
   <div id="content" class="aksharamukha-text"></div>
 
+  <div id="original" style="visibility: hidden">__ORIGINAL_MD_CONTENT__</div>
+  
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-
     const contentEl = document.getElementById("content");
-
-    // Main loading logic
-    fetch("vinaayakaadi.md")
-      .then(r => {
-        if (!r.ok) {
-          throw new Error(`HTTP error! status: ${r.status}`);
-        }
-        return r.text();
-      })
-      .then(md => {
-        const converter = new showdown.Converter();
-        contentEl.innerHTML = converter.makeHtml(md);
-      })
-      .catch(err => {
-        console.error('Error loading content:', err);
-        contentEl.textContent = "Failed to load content: " + err.message;
-      });
-
-  });
+    const converter = new showdown.Converter();
+    contentEl.innerHTML = converter.makeHtml(document.getElementById("original").textContent);
   </script>
 
 </body>
