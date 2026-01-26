@@ -1,27 +1,38 @@
+<script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
 
 <div id="showtext"></div>
 
 <script>
-  var converter = new showdown.Converter();
+  document.addEventListener("DOMContentLoaded", function () {
 
-  fetch("vinaayakaadi.md")
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("Failed to load MD file");
-      }
-      return response.text();
-    })
-    .then(mdText => {
-      var html = converter.makeHtml(mdText);
-      $("#showtext").html(html);
+    var converter = new showdown.Converter();
 
-    })
-    .catch(err => {
-      console.error(err);
-      $("#showtext").html("<p>Error loading markdown file.</p>");
-    });
-  
+    fetch("vinaayakaadi.md")
+      .then(res => res.text())
+      .then(mdText => {
+
+        // 1. Markdown → HTML
+        var html = converter.makeHtml(mdText);
+
+        // 2. Inject HTML
+        $("#showtext").html(html);
+
+        // 3. 🔥 RE-RUN Aksharamukha AFTER content exists
+        if (window.Aksharamukha) {
+          Aksharamukha.convert({
+            source: "Devanagari",
+            target: "IAST",
+            text: document.getElementById("showtext").innerText
+          });
+        }
+
+      })
+      .catch(err => {
+        console.error(err);
+        $("#showtext").html("Failed to load text");
+      });
+
+  });
 </script>
-<script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
