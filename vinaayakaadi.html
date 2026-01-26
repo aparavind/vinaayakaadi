@@ -98,7 +98,6 @@
           waitForAksharamukha().then(() => {
             if (window.Aksharamukha && typeof window.Aksharamukha.init === 'function') {
               console.log('Initializing Aksharamukha UI');
-              window.Aksharamukha.init();
             } else {
               console.error('Aksharamukha.init is not a function or Aksharamukha not defined');
               // Try the retry method as fallback
