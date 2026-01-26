@@ -30,7 +30,6 @@
     function initAksharamukha(retryCount = 0, maxRetries = 5) {
       if (window.Aksharamukha) {
         console.log('Aksharamukha loaded, initializing...');
-        Aksharamukha.init();
         return true;
       } else {
         if (retryCount < maxRetries) {
