@@ -2,66 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sanskrit Reader</title>
+  <title>Sanskrit Markdown Reader</title>
 
-  <script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
+  <!-- Markdown renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
   <style>
-    body { font-family: serif; line-height: 1.6; padding: 20px; }
-    select { font-size: 16px; margin-bottom: 15px; }
-    pre { white-space: pre-wrap; }
+    body {
+      font-family: serif;
+      line-height: 1.6;
+      padding: 20px;
+    }
   </style>
 </head>
 
 <body>
 
-  <label>
-    Select Script:
-    <select id="script">
-      <option value="Devanagari">Devanagari</option>
-      <option value="IAST">IAST</option>
-      <option value="Tamil">Tamil</option>
-      <option value="Kannada">Kannada</option>
-      <option value="Telugu">Telugu</option>
-      <option value="Malayalam">Malayalam</option>
-    </select>
-  </label>
-
-  <pre id="content"></pre>
+  <!-- Markdown output -->
+  <div id="content" class="aksharamukha-text"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
 
-      const contentEl = document.getElementById("content");
-      const scriptSelect = document.getElementById("script");
+    const contentEl = document.getElementById("content");
 
-      let originalText = "";
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
 
-      fetch("vinaayakaadi.md")
-        .then(r => r.text())
-        .then(text => {
-          originalText = text;
-          convert();
-        });
+    // 1️⃣ Fetch & render Markdown FIRST
+    fetch("vinaayakaadi.md")
+      .then(r => r.text())
+      .then(md => {
+        const converter = new showdown.Converter();
+        contentEl.innerHTML = converter.makeHtml(md);
 
-      function convert() {
-        if (!window.Aksharamukha) return;
+        // 2️⃣ Load Aksharamukha ONLY AFTER content exists
+        return loadScript(
+          "https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"
+        );
+      })
+      .then(() => {
+        // 3️⃣ Initialize Aksharamukha UI
+        if (window.Aksharamukha) {
+          Aksharamukha.init();
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        contentEl.textContent = "Failed to load content.";
+      });
 
-        const target = scriptSelect.value;
-
-        contentEl.textContent =
-          target === "Devanagari"
-            ? originalText
-            : Aksharamukha.convert(
-                "Devanagari",
-                target,
-                originalText
-              );
-      }
-
-      scriptSelect.addEventListener("change", convert);
-
-    });
+  });
   </script>
 
 </body>
