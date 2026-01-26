@@ -38,8 +38,6 @@
       .then(md => {
         const converter = new showdown.Converter();
         contentEl.innerHTML = converter.makeHtml(md);
-        
-        document.head.appendChild(script);
       })
       .catch(err => {
         console.error('Error loading content:', err);
