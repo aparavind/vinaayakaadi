@@ -1,28 +1,68 @@
-<script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sanskrit Reader</title>
 
-<div id="showtext" class="aksharamukha-text"></div>
+  <script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+  <style>
+    body { font-family: serif; line-height: 1.6; padding: 20px; }
+    select { font-size: 16px; margin-bottom: 15px; }
+    pre { white-space: pre-wrap; }
+  </style>
+</head>
 
-  const converter = new showdown.Converter();
+<body>
 
-  fetch("vinaayakaadi.md")
-    .then(r => r.text())
-    .then(md => {
+  <label>
+    Select Script:
+    <select id="script">
+      <option value="Devanagari">Devanagari</option>
+      <option value="IAST">IAST</option>
+      <option value="Tamil">Tamil</option>
+      <option value="Kannada">Kannada</option>
+      <option value="Telugu">Telugu</option>
+      <option value="Malayalam">Malayalam</option>
+    </select>
+  </label>
 
-      // 1. Markdown → HTML
-      document.getElementById("showtext").innerHTML =
-        converter.makeHtml(md);
+  <pre id="content"></pre>
 
-      // 2. 🔥 Re-initialize Aksharamukha UI
-      if (window.Aksharamukha) {
-        Aksharamukha.init();
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const contentEl = document.getElementById("content");
+      const scriptSelect = document.getElementById("script");
+
+      let originalText = "";
+
+      fetch("vinaayakaadi.md")
+        .then(r => r.text())
+        .then(text => {
+          originalText = text;
+          convert();
+        });
+
+      function convert() {
+        if (!window.Aksharamukha) return;
+
+        const target = scriptSelect.value;
+
+        contentEl.textContent =
+          target === "Devanagari"
+            ? originalText
+            : Aksharamukha.convert(
+                "Devanagari",
+                target,
+                originalText
+              );
       }
 
-    });
+      scriptSelect.addEventListener("change", convert);
 
-});
-</script>
+    });
+  </script>
+
+</body>
+</html>
