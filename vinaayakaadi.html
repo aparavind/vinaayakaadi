@@ -1,4 +1,3 @@
-<script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
 
@@ -17,9 +16,12 @@
     .then(mdText => {
       var html = converter.makeHtml(mdText);
       $("#showtext").html(html);
+
     })
     .catch(err => {
       console.error(err);
       $("#showtext").html("<p>Error loading markdown file.</p>");
     });
+  
 </script>
+<script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
