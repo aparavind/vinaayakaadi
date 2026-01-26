@@ -2,37 +2,27 @@
 <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
 
-<div id="showtext"></div>
+<div id="showtext" class="aksharamukha-text"></div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
 
-    var converter = new showdown.Converter();
+  const converter = new showdown.Converter();
 
-    fetch("vinaayakaadi.md")
-      .then(res => res.text())
-      .then(mdText => {
+  fetch("vinaayakaadi.md")
+    .then(r => r.text())
+    .then(md => {
 
-        // 1. Markdown → HTML
-        var html = converter.makeHtml(mdText);
+      // 1. Markdown → HTML
+      document.getElementById("showtext").innerHTML =
+        converter.makeHtml(md);
 
-        // 2. Inject HTML
-        $("#showtext").html(html);
+      // 2. 🔥 Re-initialize Aksharamukha UI
+      if (window.Aksharamukha) {
+        Aksharamukha.init();
+      }
 
-        // 3. 🔥 RE-RUN Aksharamukha AFTER content exists
-        if (window.Aksharamukha) {
-          Aksharamukha.convert({
-            source: "Devanagari",
-            target: "IAST",
-            text: document.getElementById("showtext").innerText
-          });
-        }
+    });
 
-      })
-      .catch(err => {
-        console.error(err);
-        $("#showtext").html("Failed to load text");
-      });
-
-  });
+});
 </script>
