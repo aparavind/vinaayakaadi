@@ -13,17 +13,28 @@ jobs:
 
       - name: Inject Markdown into HTML Template
         run: |
-          # 1. Read the markdown content and escape characters that might break sed
-          # 2. Use 'sed' to replace the placeholder with the content of vinaayakaadi.md
-          # This specific 'sed' command reads from vinaayakaadi.md and inserts it 
-          # where it finds the __ORIGINAL_MD_CONTENT__ keyword.
-          set -x
-          sed -e '/__ORIGINAL_MD_CONTENT__/{r vinaayakaadi.md' -e 'd}' vinaayakaadi.html > vinayka_pooja.html
+          set -e
+          mkdir -p _site
+          # Use Python for reliable substitution (works on all runners; sed varies by OS)
+          python3 << 'PY'
+          placeholder = "__ORIGINAL_MD_CONTENT__"
+          with open("vinaayakaadi.html", "r") as f:
+            html = f.read()
+          with open("vinaayakaadi.md", "r") as f:
+            md = f.read()
+          if placeholder not in html:
+            raise SystemExit(f"Placeholder {placeholder!r} not found in template")
+          out = html.replace(placeholder, md)
+          with open("_site/vinayka_pooja.html", "w") as f:
+            f.write(out)
+          PY
+          test -f _site/vinayka_pooja.html && test -s _site/vinayka_pooja.html
+          cp _site/vinayka_pooja.html _site/index.html
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'  # Upload the folder containing your new index.html
+          path: '_site'
 
   deploy:
     needs: build
