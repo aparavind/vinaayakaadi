@@ -1,3 +1,7 @@
+===
+permalink : readme.html
+===
+
 # vinaayakaadi
 
 This is the text version written of 'विनायकादि - पूजापद्धतिः
