@@ -17,7 +17,7 @@ jobs:
           # 2. Use 'sed' to replace the placeholder with the content of vinaayakaadi.md
           # This specific 'sed' command reads from vinaayakaadi.md and inserts it 
           # where it finds the __ORIGINAL_MD_CONTENT__ keyword.
-          
+          set -x
           sed -e '/__ORIGINAL_MD_CONTENT__/{r vinaayakaadi.md' -e 'd}' vinaayakaadi.html > index.html
 
       - name: Upload Build Artifact
