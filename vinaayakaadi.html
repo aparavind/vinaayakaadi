@@ -2,34 +2,262 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sanskrit Markdown Reader</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>सिद्धिविनायक पूजापद्धतिः</title>
 
-  <!-- Markdown renderer -->
-  <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@14/dist/markdown-it.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha/aksharamukha-web-plugin/aksharamukha-v3.js"></script>
 
   <style>
+    :root {
+      --sidebar-width: 260px;
+      --sidebar-bg: #f8f6f3;
+      --border: 1px solid #e8e4de;
+      --accent: #2c1810;
+      --text: #1a1512;
+      --muted: #6b5b52;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: serif;
-      line-height: 1.6;
-      padding: 20px;
+      margin: 0;
+      font-family: "Noto Serif Devanagari", "Noto Serif", Georgia, serif;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar / TOC */
+    .sidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      background: var(--sidebar-bg);
+      border-right: var(--border);
+      padding: 1.25rem 0;
+      position: sticky;
+      top: 0;
+      max-height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      padding: 0 1.25rem 0.75rem;
+      margin: 0;
+      border-bottom: var(--border);
+    }
+
+    .toc {
+      list-style: none;
+      margin: 0.75rem 0 0;
+      padding: 0 0 2rem 1rem;
+    }
+
+    .toc li { margin: 0; }
+
+    .toc a {
+      display: block;
+      padding: 0.35rem 0.75rem;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.95rem;
+      border-left: 2px solid transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .toc a:hover {
+      background: rgba(0,0,0,0.04);
+      border-left-color: var(--muted);
+    }
+
+    .toc a.active {
+      border-left-color: var(--accent);
+      background: rgba(44,24,16,0.06);
+      font-weight: 500;
+    }
+
+    .toc ul {
+      list-style: none;
+      margin: 0;
+      padding-left: 0.75rem;
+      border-left: 1px solid #e8e4de;
+    }
+
+    .toc .toc-h1 { font-weight: 600; }
+    .toc .toc-h2 { font-size: 0.9em; }
+    .toc .toc-h3 { font-size: 0.85em; color: var(--muted); }
+
+    /* Main content */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 2rem 3rem 4rem;
+    }
+
+    .main .aksharamukha-text {
+      font-size: 1.05rem;
+      max-width: 42em;
+    }
+
+    .main h1 {
+      font-size: 1.75rem;
+      margin: 0 0 1.5rem;
+      color: var(--accent);
+      padding-bottom: 0.5rem;
+      border-bottom: var(--border);
+    }
+
+    .main h2 {
+      font-size: 1.25rem;
+      margin: 2rem 0 0.75rem;
+      color: var(--accent);
+    }
+
+    .main h3 {
+      font-size: 1.05rem;
+      margin: 1.5rem 0 0.5rem;
+      color: var(--muted);
+    }
+
+    .main p { margin: 0.75rem 0; }
+
+    .main pre,
+    .main code {
+      font-family: "Noto Sans Devanagari", ui-monospace, monospace;
+      background: var(--sidebar-bg);
+      border-radius: 4px;
+    }
+
+    .main pre {
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      border: var(--border);
+    }
+
+    .main code { padding: 0.2em 0.4em; font-size: 0.92em; }
+
+    /* Scroll margin for anchored headings */
+    .main [id] { scroll-margin-top: 1rem; }
+
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; }
+      .sidebar {
+        width: 100%;
+        max-height: none;
+        position: relative;
+        border-right: none;
+        border-bottom: var(--border);
+      }
+      .main { padding: 1.5rem 1.25rem 2rem; }
     }
   </style>
 </head>
-
 <body>
 
-  <!-- Markdown output -->
-  <div id="content" class="aksharamukha-text"></div>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Table of contents">
+      <p class="sidebar-title">विषयसूची</p>
+      <nav id="toc" class="toc-nav">
+        <ul class="toc" id="toc-list"></ul>
+      </nav>
+    </aside>
 
-  <div id="original" style="visibility: hidden">
+    <main class="main">
+      <div id="content" class="aksharamukha-text"></div>
+    </main>
+  </div>
+
+  <div id="original" style="display: none;">
 __ORIGINAL_MD_CONTENT__
   </div>
-  
+
   <script>
-    const contentEl = document.getElementById("content");
-    const converter = new showdown.Converter();
-    contentEl.innerHTML = converter.makeHtml(document.getElementById("original").textContent);
+    (function () {
+      const mdSrc = document.getElementById("original").textContent;
+      const md = window.markdownit({ html: false, linkify: true });
+      const html = md.render(mdSrc);
+      const contentEl = document.getElementById("content");
+      contentEl.innerHTML = html;
+
+      // Add ids to headings and build TOC
+      const headings = contentEl.querySelectorAll("h1, h2, h3");
+      const tocList = document.getElementById("toc-list");
+      let tocHtml = "";
+      const slug = (text, index) => {
+        const s = text.trim().replace(/\s+/g, "-").replace(/[^\w\u0900-\u097F\-]/g, "") || "section";
+        return s ? s + "-" + index : "s-" + index;
+      };
+
+      headings.forEach((el, i) => {
+        const id = slug(el.textContent, i);
+        el.id = id;
+        const level = parseInt(el.tagName.charAt(1), 10);
+        el.setAttribute("data-toc-level", level);
+      });
+
+      function buildTocHtml() {
+        const stack = [];
+        let out = "";
+        headings.forEach((el) => {
+          const level = parseInt(el.tagName.charAt(1), 10);
+          const cls = "toc-h" + level;
+          const id = el.id;
+          const link = "<a href=\"#" + id + "\" class=\"" + cls + "\">" + escapeHtml(el.textContent.trim()) + "</a>";
+          while (stack.length > 0 && stack[stack.length - 1] >= level) {
+            stack.pop();
+            out += "</li></ul>";
+          }
+          if (level === 1) {
+            out += "<li>" + link + "</li>";
+          } else {
+            if (stack.length === 0 || stack[stack.length - 1] < level) {
+              out += "<ul><li>" + link;
+              stack.push(level);
+            } else {
+              out += "</li><li>" + link;
+            }
+          }
+        });
+        while (stack.length > 0) {
+          stack.pop();
+          out += "</li></ul>";
+        }
+        return out;
+      }
+      tocList.innerHTML = buildTocHtml();
+
+      function escapeHtml(s) {
+        const div = document.createElement("div");
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      // Highlight active TOC item on scroll
+      const tocLinks = tocList.querySelectorAll("a");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const id = entry.target.id;
+            tocLinks.forEach((a) => {
+              a.classList.toggle("active", a.getAttribute("href") === "#" + id);
+            });
+          });
+        },
+        { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
+      );
+      headings.forEach((h) => observer.observe(h));
+    })();
   </script>
 
 </body>
