@@ -131,6 +131,15 @@
 
     .main p { margin: 0.75rem 0; }
 
+    /* MDX content blocks (Markdown + HTML) */
+    .main .sankalpa-block,
+    .main .mantra-meta,
+    .main .mantra-verses,
+    .main .vedic-verses {
+      margin: 0.75rem 0;
+      padding: 0.5rem 0;
+    }
+
     .main pre,
     .main code {
       font-family: "Noto Sans Devanagari", ui-monospace, monospace;
@@ -184,7 +193,7 @@ __ORIGINAL_MD_CONTENT__
   <script>
     (function () {
       const mdSrc = document.getElementById("original").textContent;
-      const md = window.markdownit({ html: false, linkify: true });
+      const md = window.markdownit({ html: true, linkify: true });
       const html = md.render(mdSrc);
       const contentEl = document.getElementById("content");
       contentEl.innerHTML = html;
