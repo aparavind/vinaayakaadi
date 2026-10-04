@@ -65,6 +65,11 @@
 
     .toc li { margin: 0; }
 
+    .toc-entry {
+      display: flex;
+      align-items: center;
+    }
+
     .toc a {
       display: block;
       padding: 0.35rem 0.75rem;
@@ -74,6 +79,26 @@
       border-left: 2px solid transparent;
       transition: border-color 0.15s, background 0.15s;
     }
+
+    .toc-entry a { flex: 1; }
+
+    .toc-toggle {
+      flex: 0 0 1.75rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      border: 0;
+      border-radius: 3px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .toc-toggle::before { content: "\25B8"; }
+    .toc-toggle[aria-expanded="true"]::before { content: "\25BE"; }
+
+    .toc-toggle:hover { background: rgba(0,0,0,0.06); }
+    .toc-toggle:focus-visible { outline: 2px solid var(--accent); }
 
     .toc a:hover {
       background: rgba(0,0,0,0.04);
@@ -92,6 +117,8 @@
       padding-left: 0.75rem;
       border-left: 1px solid #e8e4de;
     }
+
+    .toc-children[hidden] { display: none; }
 
     .toc .toc-h1 { font-weight: 600; }
     .toc .toc-h2 { font-size: 0.9em; }
@@ -214,42 +241,72 @@ __ORIGINAL_MD_CONTENT__
         el.setAttribute("data-toc-level", level);
       });
 
-      function buildTocHtml() {
-        const stack = [];
-        let out = "";
-        headings.forEach((el) => {
-          const level = parseInt(el.tagName.charAt(1), 10);
-          const cls = "toc-h" + level;
-          const id = el.id;
-          const link = "<a href=\"#" + id + "\" class=\"" + cls + "\">" + escapeHtml(el.textContent.trim()) + "</a>";
-          while (stack.length > 0 && stack[stack.length - 1] >= level) {
-            stack.pop();
-            out += "</li></ul>";
-          }
-          if (level === 1) {
-            out += "<li>" + link + "</li>";
-          } else {
-            if (stack.length === 0 || stack[stack.length - 1] < level) {
-              out += "<ul><li>" + link;
-              stack.push(level);
-            } else {
-              out += "</li><li>" + link;
-            }
-          }
-        });
-        while (stack.length > 0) {
-          stack.pop();
-          out += "</li></ul>";
-        }
-        return out;
-      }
-      tocList.innerHTML = buildTocHtml();
+      const tocRoot = { level: 0, children: [] };
+      const stack = [tocRoot];
+      headings.forEach((heading) => {
+        const item = {
+          heading,
+          level: parseInt(heading.tagName.charAt(1), 10),
+          children: []
+        };
+        while (stack[stack.length - 1].level >= item.level) stack.pop();
+        stack[stack.length - 1].children.push(item);
+        stack.push(item);
+      });
 
-      function escapeHtml(s) {
-        const div = document.createElement("div");
-        div.textContent = s;
-        return div.innerHTML;
+      function renderTocItems(items, list) {
+        items.forEach(({ heading, children }) => {
+          const item = document.createElement("li");
+          item.className = "toc-item";
+          const entry = document.createElement("div");
+          entry.className = "toc-entry";
+
+          if (children.length > 0) {
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.className = "toc-toggle";
+            toggle.setAttribute("aria-expanded", "false");
+            toggle.setAttribute("aria-label", `Expand sections under ${heading.textContent.trim()}`);
+
+            const childList = document.createElement("ul");
+            childList.className = "toc-children";
+            childList.id = `toc-children-${heading.id}`;
+            childList.hidden = true;
+            toggle.setAttribute("aria-controls", childList.id);
+            toggle.addEventListener("click", () => {
+              const expanded = toggle.getAttribute("aria-expanded") === "true";
+              toggle.setAttribute("aria-expanded", String(!expanded));
+              toggle.setAttribute(
+                "aria-label",
+                `${expanded ? "Expand" : "Collapse"} sections under ${heading.textContent.trim()}`
+              );
+              childList.hidden = expanded;
+            });
+            entry.appendChild(toggle);
+            item.appendChild(entry);
+
+            const link = document.createElement("a");
+            link.href = `#${heading.id}`;
+            link.className = `toc-h${heading.tagName.charAt(1)}`;
+            link.textContent = heading.textContent.trim();
+            entry.appendChild(link);
+
+            renderTocItems(children, childList);
+            item.appendChild(childList);
+          } else {
+            const link = document.createElement("a");
+            link.href = `#${heading.id}`;
+            link.className = `toc-h${heading.tagName.charAt(1)}`;
+            link.textContent = heading.textContent.trim();
+            entry.appendChild(link);
+            item.appendChild(entry);
+          }
+
+          list.appendChild(item);
+        });
       }
+
+      renderTocItems(tocRoot.children, tocList);
 
       // Highlight active TOC item on scroll
       const tocLinks = tocList.querySelectorAll("a");
@@ -261,6 +318,22 @@ __ORIGINAL_MD_CONTENT__
             tocLinks.forEach((a) => {
               a.classList.toggle("active", a.getAttribute("href") === "#" + id);
             });
+
+            let item = tocList.querySelector(`a[href="#${id}"]`).closest(".toc-item");
+            while (item && item.parentElement !== tocList) {
+              const parentItem = item.parentElement.closest(".toc-item");
+              if (!parentItem) break;
+              const toggle = parentItem.querySelector(".toc-toggle");
+              if (toggle) {
+                toggle.setAttribute("aria-expanded", "true");
+                toggle.setAttribute(
+                  "aria-label",
+                  `Collapse sections under ${parentItem.querySelector(".toc-entry a").textContent}`
+                );
+                document.getElementById(toggle.getAttribute("aria-controls")).hidden = false;
+              }
+              item = parentItem;
+            }
           });
         },
         { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
